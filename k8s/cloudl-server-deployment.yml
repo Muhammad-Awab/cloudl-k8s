@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: cloudl-server
-          image: sajjadhz/cloudl-server:v1
+          image: awabahmed/cloudl:backendv1
           ports:
             - containerPort: 5000
               name: nodejs-port
