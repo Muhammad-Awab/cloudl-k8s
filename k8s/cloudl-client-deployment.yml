@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: cloudl-client
-          image: sajjadhz/cloudl-client:v1
+          image: awabahmed/cloudl:frontendv1
           ports:
             - containerPort: 80
               name: http-port
