@@ -28,9 +28,9 @@ pipeline {
     stage('Namespace + Static K8s objects') {
       steps {
         sh '''
-          kubectl apply -f k8s/namespace.yaml
-          kubectl -n cloudl apply -f k8s/secret.yaml
-          kubectl -n cloudl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/namespace.yaml --validate=false
+          kubectl -n cloudl apply -f k8s/secret.yaml --validate=false
+          kubectl -n cloudl apply -f k8s/configmap.yaml --validate=false
 
           # refresh ECR pull secret (token expires ~12h)
           REG=$(echo $IMAGE_BACKEND | awk -F/ '{print $1}')
