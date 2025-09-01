@@ -19,7 +19,7 @@ pipeline {
             mkdir -p $HOME/.kube
             cp "$KCFG" $HOME/.kube/config
             chmod 600 $HOME/.kube/config
-            kubectl version --short
+            kubectl version --client=true || kubectl version --client
           '''
         }
       }
