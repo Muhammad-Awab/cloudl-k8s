@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongodb-service
+  namespace: cloudl
 spec:
   ports:
     - port: 27017

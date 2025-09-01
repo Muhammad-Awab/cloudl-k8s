@@ -1,0 +1,43 @@
+pipeline {
+  agent any
+  environment {
+    AWS_DEFAULT_REGION = 'eu-north-1'
+    ACCOUNT_ID = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
+    ECR_REGISTRY = "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+    ECR_REPO = "cloudl"   // single repo
+  }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+
+    stage('Build & Push') {
+      steps {
+        script {
+          env.GIT_SHA = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
+          // Tag names distinguish services
+          env.IMG_BE = "${ECR_REGISTRY}/${ECR_REPO}:backendv1-${GIT_SHA}"
+          env.IMG_FE = "${ECR_REGISTRY}/${ECR_REPO}:frontendv1-${GIT_SHA}"
+        }
+        sh '''
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION \
+          | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+          docker build -t $IMG_BE ./backend
+          docker push $IMG_BE
+
+          docker build -t $IMG_FE ./frontend
+          docker push $IMG_FE
+        '''
+      }
+    }
+  }
+  post {
+    success {
+      script {
+        build job: 'cd-deploy-cloudl', parameters: [
+          string(name: 'IMAGE_BACKEND',  value: env.IMG_BE),
+          string(name: 'IMAGE_FRONTEND', value: env.IMG_FE)
+        ], wait: false
+      }
+    }
+  }
+}
