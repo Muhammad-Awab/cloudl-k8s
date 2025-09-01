@@ -6,6 +6,7 @@ pipeline {
   }
   environment {
     AWS_DEFAULT_REGION = 'eu-north-1'
+    PATH = "/usr/local/bin:/usr/bin:/bin:${env.PATH}"
   }
   options { timestamps() }
 
@@ -28,18 +29,23 @@ pipeline {
     stage('Namespace + Static K8s objects') {
       steps {
         sh '''
+          set -e
           kubectl apply -f k8s/namespace.yaml --validate=false
-          kubectl -n cloudl apply -f k8s/secret.yaml --validate=false
-          kubectl -n cloudl apply -f k8s/configmap.yaml --validate=false
+          kubectl -n cloudl apply -f k8s/secret.yml --validate=false
+          kubectl -n cloudl apply -f k8s/configmap.yml --validate=false
 
-          # refresh ECR pull secret (token expires ~12h)
+          # DB bits
+          kubectl -n cloudl apply -f k8s/mongodb-service.yml
+          test -f k8s/mongo-pvc.yaml && kubectl -n cloudl apply -f k8s/mongo-pvc.yaml || true
+          kubectl -n cloudl apply -f k8s/mongo.yml
+          test -f k8s/mongo-express.yml && kubectl -n cloudl apply -f k8s/mongo-express.yml || true
+
+          # Refresh ECR imagePullSecret (token expires ~12h)
           REG=$(echo $IMAGE_BACKEND | awk -F/ '{print $1}')
           PASS=$(aws ecr get-login-password --region $AWS_DEFAULT_REGION)
           kubectl -n cloudl create secret docker-registry ecr-creds \
             --docker-server=$REG --docker-username=AWS --docker-password="$PASS" \
             --dry-run=client -o yaml | kubectl apply -f -
-
-          kubectl -n cloudl apply -f k8s/mongo.yaml
         '''
       }
     }
@@ -47,10 +53,15 @@ pipeline {
     stage('Render manifests (inject image tags)') {
       steps {
         sh '''
+          set -e
           export IMAGE_BACKEND="$IMAGE_BACKEND"
           export IMAGE_FRONTEND="$IMAGE_FRONTEND"
-          envsubst < k8s/backend.yaml  > k8s/_backend.rendered.yaml
-          envsubst < k8s/frontend.yaml > k8s/_frontend.rendered.yaml
+
+          # Render server (backend) deployment
+          envsubst < k8s/cloudl-server-deployment.yml > k8s/_server.rendered.yaml
+
+          # Render client (frontend) deployment
+          envsubst < k8s/cloudl-client-deployment-frontend.yml > k8s/_client.rendered.yaml
         '''
       }
     }
@@ -58,13 +69,19 @@ pipeline {
     stage('Deploy app tier') {
       steps {
         sh '''
-          kubectl -n cloudl apply -f k8s/_backend.rendered.yaml
-          kubectl -n cloudl apply -f k8s/_frontend.rendered.yaml
-          kubectl -n cloudl apply -f k8s/ingress.yaml
+          set -e
+          kubectl -n cloudl apply -f k8s/_server.rendered.yaml
+          kubectl -n cloudl apply -f k8s/_client.rendered.yaml
 
+          # Apply ingress only if present in repo
+          test -f k8s/ingress.yaml && kubectl -n cloudl apply -f k8s/ingress.yaml || true
+
+          # Rollout status (try common names)
           kubectl -n cloudl rollout status deploy/cloudl-server-deployment --timeout=180s || true
+          kubectl -n cloudl rollout status deploy/cloudl-client-deployment-frontend --timeout=180s || true
           kubectl -n cloudl rollout status deploy/cloudl-client-deployment --timeout=180s || true
-          kubectl -n cloudl get svc,ingress -o wide
+
+          kubectl -n cloudl get pods,svc,ingress -o wide
         '''
       }
     }
@@ -72,6 +89,7 @@ pipeline {
     stage('Smoke') {
       steps {
         sh '''
+          # Quick health probe against the backend service DNS inside cluster
           kubectl -n cloudl run curl --rm -i --restart=Never --image=curlimages/curl \
             -- curl -sS http://cloudl-server-service.cloudl.svc.cluster.local:5000/health || true
         '''
