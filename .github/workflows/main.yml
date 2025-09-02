@@ -21,6 +21,12 @@ jobs:
       # Log in to Amazon ECR
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'  # This addresses the password masking warning
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       # Build and push the backend Docker image to Amazon ECR
       - name: Build and push backend image
@@ -28,10 +34,6 @@ jobs:
           BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${GITHUB_SHA}"
           docker build -t $BACKEND_IMAGE ./backend
           docker push $BACKEND_IMAGE
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       # Build and push the frontend Docker image to Amazon ECR
       - name: Build and push frontend image
@@ -39,10 +41,6 @@ jobs:
           FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${GITHUB_SHA}"
           docker build -t $FRONTEND_IMAGE ./frontend
           docker push $FRONTEND_IMAGE
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
   update_k8s_manifests:
     runs-on: ubuntu-latest
@@ -56,12 +54,14 @@ jobs:
       # Update the backend image in the Kubernetes manifest
       - name: Update backend image in Kubernetes manifest
         run: |
-          sed -i 's|image: .*/cloudl-backend.*|image: ${BACKEND_IMAGE}|g' ./k8s/cloudl-server-deployment.yml
+          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${{ github.sha }}"
+          sed -i "s|image: .*/cloudl-backend.*|image: ${BACKEND_IMAGE}|g" ./k8s/cloudl-server-deployment.yml
 
       # Update the frontend image in the Kubernetes manifest
       - name: Update frontend image in Kubernetes manifest
         run: |
-          sed -i 's|image: .*/cloudl-frontend.*|image: ${FRONTEND_IMAGE}|g' ./k8s/cloudl-client-deployment-frontend.yml
+          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${{ github.sha }}"
+          sed -i "s|image: .*/cloudl-frontend.*|image: ${FRONTEND_IMAGE}|g" ./k8s/cloudl-client-deployment-frontend.yml
 
       # Commit the updated Kubernetes manifests with the new image tags
       - name: Commit updated manifests
@@ -69,5 +69,5 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add ./k8s/cloudl-server-deployment.yml ./k8s/cloudl-client-deployment-frontend.yml
-          git commit -m "Update image tags"
+          git commit -m "Update image tags to ${{ github.sha }}"
           git push origin argo
