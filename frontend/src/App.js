@@ -15,7 +15,7 @@ import PrivateRoute from "./utils/PrivateRoute";
 import Dashboard from "./containers/Dashboard";
 import Jobs from "./containers/Jobs";
 
-// Check for token to keep user logged inn
+// Check for token to keep user logged innd
 if (localStorage.jwtToken) {
     // Set auth token header auth
     const token = localStorage.jwtToken;
