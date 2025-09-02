@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: cloudl-client
-          image: awabahmed/cloudl:frontendv1
+          image: ${IMAGE_FRONTEND}
           ports:
             - containerPort: 80
               name: http-port
