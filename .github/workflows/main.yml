@@ -12,33 +12,35 @@ jobs:
     steps:
       # Checkout the code from the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       # Log in to Amazon ECR
       - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          mask-password: 'true'  # This addresses the password masking warning
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        uses: aws-actions/amazon-ecr-login@v2
 
       # Build and push the backend Docker image to Amazon ECR
       - name: Build and push backend image
         run: |
-          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${GITHUB_SHA}"
+          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${{ github.sha }}"
           docker build -t $BACKEND_IMAGE ./backend
           docker push $BACKEND_IMAGE
 
       # Build and push the frontend Docker image to Amazon ECR
       - name: Build and push frontend image
         run: |
-          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${GITHUB_SHA}"
+          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${{ github.sha }}"
           docker build -t $FRONTEND_IMAGE ./frontend
           docker push $FRONTEND_IMAGE
 
@@ -49,19 +51,19 @@ jobs:
     steps:
       # Checkout the code from the repository again for updating the manifests
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Update the backend image in the Kubernetes manifest
       - name: Update backend image in Kubernetes manifest
         run: |
           BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${{ github.sha }}"
-          sed -i "s|image: .*/cloudl-backend.*|image: ${BACKEND_IMAGE}|g" ./k8s/cloudl-server-deployment.yml
+          sed -i "s|image: .*/cloudl-backend.*|image: $BACKEND_IMAGE|g" ./k8s/cloudl-server-deployment.yml
 
       # Update the frontend image in the Kubernetes manifest
       - name: Update frontend image in Kubernetes manifest
         run: |
           FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${{ github.sha }}"
-          sed -i "s|image: .*/cloudl-frontend.*|image: ${FRONTEND_IMAGE}|g" ./k8s/cloudl-client-deployment-frontend.yml
+          sed -i "s|image: .*/cloudl-frontend.*|image: $FRONTEND_IMAGE|g" ./k8s/cloudl-client-deployment-frontend.yml
 
       # Commit the updated Kubernetes manifests with the new image tags
       - name: Commit updated manifests
