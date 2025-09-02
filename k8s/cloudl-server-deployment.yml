@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: cloudl-server
-          image: awabahmed/cloudl:backendv1
+          image: ${IMAGE_BACKEND}
           ports:
             - containerPort: 5000
               name: nodejs-port
