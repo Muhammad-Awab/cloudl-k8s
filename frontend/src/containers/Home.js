@@ -38,7 +38,7 @@ class Home extends Component {
                                 }}
                                 className="btn btn-large btn-flat waves-effect light-green black-text"
                             >
-                                Log Inn
+                                Log In
                             </Link>
                         </div>
                     </div>
