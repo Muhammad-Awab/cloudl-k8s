@@ -33,14 +33,13 @@ jobs:
       # Build and push the backend Docker image to Amazon ECR
       - name: Build and push backend image
         run: |
-          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:backendv1-${{ github.sha }}"
+          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}:backendv1-${{ github.sha }}"
           docker build -t $BACKEND_IMAGE ./backend
           docker push $BACKEND_IMAGE
-
-      # Build and push the frontend Docker image to Amazon ECR
+      
       - name: Build and push frontend image
         run: |
-          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:frontendv1-${{ github.sha }}"
+          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}:frontendv1-${{ github.sha }}"
           docker build -t $FRONTEND_IMAGE ./frontend
           docker push $FRONTEND_IMAGE
 
