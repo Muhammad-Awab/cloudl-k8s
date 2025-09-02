@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: cloudl-server
-          image: ${IMAGE_BACKEND}
+          image: ${IMG_BE}
           ports:
             - containerPort: 5000
               name: nodejs-port
