@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: cloudl-client
-          image: ${IMG_FE}
+          image: 888507318922.dkr.ecr.eu-north-1.amazonaws.com/cloudl/cloudl:frontendv1-eb9fc032feec8ead159234da36062f975e4c1bc6
           ports:
             - containerPort: 80
               name: http-port
