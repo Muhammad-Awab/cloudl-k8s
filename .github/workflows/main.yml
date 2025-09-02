@@ -74,4 +74,3 @@ jobs:
           git add ./k8s/cloudl-server-deployment.yml ./k8s/cloudl-client-deployment-frontend.yml
           git commit -m "Update image tags to ${{ github.sha }}"
           git push https://${{ github.actor }}:${{ secrets.PAT }}@github.com/${{ github.repository }}.git argo
-
