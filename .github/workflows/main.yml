@@ -69,9 +69,9 @@ jobs:
       # Commit the updated Kubernetes manifests with the new image tags
       - name: Commit updated manifests
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "Muhammad-Awab"
+          git config --global user.email "muhammadawab82002@gmail.com"
           git add ./k8s/cloudl-server-deployment.yml ./k8s/cloudl-client-deployment-frontend.yml
           git commit -m "Update image tags to ${{ github.sha }}"
-          git push https://${{ github.actor }}:${{ secrets.PAT }}@github.com/${{ github.repository }}.git argo
+          git push https://Muhammad-Awab:${{ secrets.PAT }}@github.com/Muhammad-Awab/cloudl-k8s.git argo
 
