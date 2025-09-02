@@ -33,20 +33,20 @@ jobs:
       # Build and push the backend Docker image to Amazon ECR
       - name: Build and push backend image
         run: |
-          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${{ github.sha }}"
+          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:backendv1-${{ github.sha }}"
           docker build -t $BACKEND_IMAGE ./backend
           docker push $BACKEND_IMAGE
 
       # Build and push the frontend Docker image to Amazon ECR
       - name: Build and push frontend image
         run: |
-          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${{ github.sha }}"
+          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:frontendv1-${{ github.sha }}"
           docker build -t $FRONTEND_IMAGE ./frontend
           docker push $FRONTEND_IMAGE
 
   update_k8s_manifests:
     runs-on: ubuntu-latest
-    needs: build_and_push  # Wait for the build_and_push job to complete before running this job
+    needs: build_and_push
 
     steps:
       # Checkout the code from the repository again for updating the manifests
@@ -56,14 +56,16 @@ jobs:
       # Update the backend image in the Kubernetes manifest
       - name: Update backend image in Kubernetes manifest
         run: |
-          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-backend:v1-${{ github.sha }}"
-          sed -i "s|image: .*/cloudl-backend.*|image: $BACKEND_IMAGE|g" ./k8s/cloudl-server-deployment.yml
+          BACKEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:backendv1-${{ github.sha }}"
+          sed -i "s|image: .*|image: $BACKEND_IMAGE|g" ./k8s/cloudl-server-deployment.yml
+          echo "Updated backend image to: $BACKEND_IMAGE"
 
       # Update the frontend image in the Kubernetes manifest
       - name: Update frontend image in Kubernetes manifest
         run: |
-          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl-frontend:v1-${{ github.sha }}"
-          sed -i "s|image: .*/cloudl-frontend.*|image: $FRONTEND_IMAGE|g" ./k8s/cloudl-client-deployment-frontend.yml
+          FRONTEND_IMAGE="${{ secrets.AWS_ECR_REGISTRY }}/cloudl:frontendv1-${{ github.sha }}"
+          sed -i "s|image: .*|image: $FRONTEND_IMAGE|g" ./k8s/cloudl-client-deployment-frontend.yml
+          echo "Updated frontend image to: $FRONTEND_IMAGE"
 
       # Commit the updated Kubernetes manifests with the new image tags
       - name: Commit updated manifests
