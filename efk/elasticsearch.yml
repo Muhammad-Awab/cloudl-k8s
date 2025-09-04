@@ -1,0 +1,27 @@
+# elasticsearch-config.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+  namespace: default
+data:
+  elasticsearch.yml: |
+    cluster.name: "docker-cluster"
+    network.host: 0.0.0.0
+    discovery.type: single-node
+    
+    # Security settings - DISABLE SSL/HTTPS for development
+    xpack.security.enabled: false
+    xpack.security.enrollment.enabled: false
+    
+    # Disable HTTP SSL
+    xpack.security.http.ssl:
+      enabled: false
+    
+    # Disable Transport SSL
+    xpack.security.transport.ssl:
+      enabled: false
+    
+    # Additional settings to prevent HTTPS issues
+    http.host: 0.0.0.0
+    transport.host: 0.0.0.0

@@ -1,0 +1,183 @@
+# fluentd-s3-config.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-s3-config
+  namespace: default
+data:
+  fluent.conf: |
+    <system>
+      log_level info
+    </system>
+
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/pos/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type regexp
+        expression /^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        keep_time_key true
+      </parse>
+    </source>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+    </filter>
+
+    # Extract log level from log content for better categorization
+    <filter kubernetes.**>
+      @type record_transformer
+      enable_ruby true
+      <record>
+        log_level ${if record["log"].match(/(ERROR|Error|error)/i); "error"; elsif record["log"].match(/(WARN|Warn|warn|WARNING|Warning|warning)/i); "warn"; elsif record["log"].match(/(INFO|Info|info)/i); "info"; elsif record["log"].match(/(DEBUG|Debug|debug)/i); "debug"; else; "other"; end}
+      </record>
+    </filter>
+
+    # Add tags to differentiate log levels for S3
+    <match kubernetes.**>
+      @type rewrite_tag_filter
+      <rule>
+        key log_level
+        pattern /^error$/
+        tag s3.error.${tag}
+      </rule>
+      <rule>
+        key log_level
+        pattern /^warn$/
+        tag s3.warn.${tag}
+      </rule>
+      <rule>
+        key log_level
+        pattern /^info$/
+        tag s3.info.${tag}
+      </rule>
+      <rule>
+        key log_level
+        pattern /^debug$/
+        tag s3.debug.${tag}
+      </rule>
+      <rule>
+        key log_level
+        pattern /^other$/
+        tag s3.other.${tag}
+      </rule>
+    </match>
+
+    # Send ERROR logs to S3 error folder
+    <match s3.error.kubernetes.**>
+      @type s3
+      aws_key_id "#{ENV['AWS_ACCESS_KEY_ID']}"
+      aws_sec_key "#{ENV['AWS_SECRET_ACCESS_KEY']}"
+      s3_bucket "cloudl-efs-poc"
+      s3_region "eu-north-1"
+      path "logs/error/%Y/%m/%d/"
+      time_slice_format %Y%m%d%H
+      <buffer time>
+        @type file
+        path /var/log/fluentd/s3/error
+        timekey 1h
+        timekey_wait 10m
+        timekey_use_utc true
+        chunk_limit_size 256m
+      </buffer>
+      <format>
+        @type json
+      </format>
+    </match>
+
+    # Send WARN logs to S3 warn folder
+    <match s3.warn.kubernetes.**>
+      @type s3
+      aws_key_id "#{ENV['AWS_ACCESS_KEY_ID']}"
+      aws_sec_key "#{ENV['AWS_SECRET_ACCESS_KEY']}"
+      s3_bucket "cloudl-efs-poc"
+      s3_region "eu-north-1"
+      path "logs/warn/%Y/%m/%d/"
+      time_slice_format %Y%m%d%H
+      <buffer time>
+        @type file
+        path /var/log/fluentd/s3/warn
+        timekey 1h
+        timekey_wait 10m
+        timekey_use_utc true
+        chunk_limit_size 256m
+      </buffer>
+      <format>
+        @type json
+      </format>
+    </match>
+
+    # Send INFO logs to S3 info folder
+    <match s3.info.kubernetes.**>
+      @type s3
+      aws_key_id "#{ENV['AWS_ACCESS_KEY_ID']}"
+      aws_sec_key "#{ENV['AWS_SECRET_ACCESS_KEY']}"
+      s3_bucket "cloudl-efs-poc"
+      s3_region "eu-north-1"
+      path "logs/info/%Y/%m/%d/"
+      time_slice_format %Y%m%d%H
+      <buffer time>
+        @type file
+        path /var/log/fluentd/s3/info
+        timekey 1h
+        timekey_wait 10m
+        timekey_use_utc true
+        chunk_limit_size 256m
+      </buffer>
+      <format>
+        @type json
+      </format>
+    </match>
+
+    # Send DEBUG logs to S3 debug folder
+    <match s3.debug.kubernetes.**>
+      @type s3
+      aws_key_id "#{ENV['AWS_ACCESS_KEY_ID']}"
+      aws_sec_key "#{ENV['AWS_SECRET_ACCESS_KEY']}"
+      s3_bucket "cloudl-efs-poc"
+      s3_region "eu-north-1"
+      path "logs/debug/%Y/%m/%d/"
+      time_slice_format %Y%m%d%H
+      <buffer time>
+        @type file
+        path /var/log/fluentd/s3/debug
+        timekey 1h
+        timekey_wait 10m
+        timekey_use_utc true
+        chunk_limit_size 256m
+      </buffer>
+      <format>
+        @type json
+      </format>
+    </match>
+
+    # Send other logs to S3 other folder
+    <match s3.other.kubernetes.**>
+      @type s3
+      aws_key_id "#{ENV['AWS_ACCESS_KEY_ID']}"
+      aws_sec_key "#{ENV['AWS_SECRET_ACCESS_KEY']}"
+      s3_bucket "cloudl-efs-poc"
+      s3_region "eu-north-1"
+      path "logs/other/%Y/%m/%d/"
+      time_slice_format %Y%m%d%H
+      <buffer time>
+        @type file
+        path /var/log/fluentd/s3/other
+        timekey 1h
+        timekey_wait 10m
+        timekey_use_utc true
+        chunk_limit_size 256m
+      </buffer>
+      <format>
+        @type json
+      </format>
+    </match>
+
+    # Fallback for any unmatched logs
+    <match **>
+      @type stdout
+    </match>

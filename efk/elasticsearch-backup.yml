@@ -1,0 +1,23 @@
+# elasticsearch-backup.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-backup-config
+  namespace: default
+data:
+  elasticsearch.yml: |
+    cluster.name: "docker-cluster"
+    network.host: 0.0.0.0
+    discovery.type: single-node
+    
+    # Security settings
+    xpack.security.enabled: false
+    
+    # S3 Repository for Snapshots
+    repository:
+      s3:
+        bucket: "cloudl-efs-poc"
+        region: "eu-north-1"
+    
+    # Enable snapshot functionality
+    path.repo: ["/usr/share/elasticsearch/snapshots"]

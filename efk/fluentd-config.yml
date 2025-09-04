@@ -1,0 +1,52 @@
+# fluentd-config.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: default
+data:
+  fluent.conf: |
+    <system>
+      log_level info
+    </system>
+
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/pos/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type regexp
+        expression /^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        keep_time_key true
+      </parse>
+    </source>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+    </filter>
+
+    <match kubernetes.**>
+      @type elasticsearch
+      host elasticsearch
+      port 9200
+      scheme http
+      ssl_verify false
+      logstash_format true
+      logstash_prefix fluentd
+      include_tag_key true
+      type_name _doc
+      flush_interval 5s
+      
+      <buffer>
+        @type memory
+        flush_interval 5s
+        retry_forever true
+      </buffer>
+    </match>
+
+    <match **>
+      @type stdout
+    </match>
