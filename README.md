@@ -4,12 +4,13 @@
 This repository contains the complete infrastructure and application code for deploying the CloudL application on Kubernetes with a comprehensive EFK (Elasticsearch, Fluentd, Kibana) logging stack, S3 log archiving, and automated backup solutions.
 
 ## 🏗️ Architecture
+```bash
 CloudL Application → Fluentd (Log Collection) → Elasticsearch (Real-time Storage) → Kibana (Visualization)
 ↓
 AWS S3 Bucket
 ├── info/ (INFO logs)
 └── error/ (ERROR logs)
-
+```
 ## 📁 Repository Structure
 ```bash
 cloudl-k8s/
