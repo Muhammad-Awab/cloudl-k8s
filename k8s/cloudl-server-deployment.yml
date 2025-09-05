@@ -5,6 +5,9 @@ metadata:
   namespace: cloudl
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: cloudl-server
   template:
     metadata:
       labels:
@@ -34,15 +37,15 @@ spec:
                 secretKeyRef:
                   key: mongo-root-password
                   name: cloudl-secret
-                  optional: false   
-  selector:
-    matchLabels:
-      app: cloudl-server
+                  optional: false
+      imagePullSecrets:
+        - name: ecr-registry-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: cloudl-server-service
+  namespace: cloudl
 spec:
   ports:
     - port: 5000

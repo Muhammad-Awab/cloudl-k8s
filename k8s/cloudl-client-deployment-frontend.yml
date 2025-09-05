@@ -5,6 +5,9 @@ metadata:
   namespace: cloudl
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: cloudl-client
   template:
     metadata:
       labels:
@@ -35,14 +38,14 @@ spec:
                   key: CLOUDL_SERVER
                   name: cloudl-configmap
                   optional: false
-  selector:
-    matchLabels:
-      app: cloudl-client
+      imagePullSecrets:
+        - name: ecr-registry-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: cloudl-client-service
+  namespace: cloudl
 spec:
   ports:
     - port: 80
