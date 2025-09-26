@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudl-configmap
+  namespace: {{ .Values.namespace }}
+data:
+  API_HOST: cloudl-server-service
+  API_PORT: "{{ .Values.service.backend.port }}"
+  CLOUDL_SERVER: cloudl-server-service
+  ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb-service:27017/cloudl?authSource=admin
+  db_service: mongodb-service

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudl-client-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudl-client
+  template:
+    metadata:
+      labels:
+        app: cloudl-client
+    spec:
+      containers:
+        - name: cloudl-client
+          image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.frontend.port }}
+              name: http-port
+          envFrom:
+            - configMapRef:
+                name: cloudl-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudl-client-service
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.frontend.port }}
+      targetPort: http-port
+  selector:
+    app: cloudl-client

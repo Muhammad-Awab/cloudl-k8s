@@ -1,0 +1,45 @@
+namespace: cloudl
+
+image:
+  frontend:
+    repository: awabahmed/cloudl
+    tag: frontendv2
+    pullPolicy: IfNotPresent
+  backend:
+    repository: awabahmed/cloudl
+    tag: backendv2
+    pullPolicy: IfNotPresent
+  mongo:
+    repository: mongo
+    tag: "8.0"
+
+service:
+  frontend:
+    port: 80
+    nodePort: 30009
+  backend:
+    port: 5000
+  mongo:
+    port: 27017
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+persistence:
+  enabled: true
+  size: 1Gi
+
+secrets:
+  mongoRootUsername: admin
+  mongoRootPassword: password
