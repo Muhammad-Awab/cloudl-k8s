@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudl-client-deployment
+spec:
+  template:
+    spec:
+      containers:
+        - name: cloudl-client
+          image: awabahmed/cloudl:frontend-staging

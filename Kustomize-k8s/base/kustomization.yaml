@@ -1,0 +1,10 @@
+resources:
+  - resources/cloudl-server-deployment.yml
+  - resources/cloudl-client-deployment-frontend.yml
+  - resources/mongo.yml
+  - resources/mongodb-service.yml
+  - resources/mongo-express.yml
+  - resources/mongo-pvc.yaml
+  - resources/configmap.yml
+  - resources/secret.yml
+  - resources/ingress.yaml

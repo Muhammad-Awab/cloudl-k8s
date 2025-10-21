@@ -1,0 +1,27 @@
+  repositories:
+    - name: local
+      url: file://../cloudl
+
+  environments:
+    dev:
+      values:
+        - ./cloudl/values-dev.yaml
+    staging:
+      values:
+        - ./cloudl/values-staging.yaml
+    prod:
+      values:
+        - ./cloudl/values-prod.yaml
+
+  releases:
+    - name: cloudl
+      namespace: "{{ .Environment.Values.namespace }}"
+      chart: ./cloudl
+      values:
+        - ./cloudl/values.yaml
+        - "{{ .Environment.Values }}"
+
+
+# helmfile -e dev sync
+# helmfile -e staging sync
+# helmfile -e prod sync

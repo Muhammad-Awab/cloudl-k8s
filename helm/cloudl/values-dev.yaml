@@ -1,0 +1,18 @@
+namespace: cloudl-dev
+image:
+  repository: awabahmed/cloudl
+  serverTag: backend-dev
+  clientTag: frontend-dev
+mongodb:
+  image: mongo:8.0
+  pvcSize: 1Gi
+  rootUsername: admin
+  rootPassword: password
+mongoExpress:
+  enabled: true
+  image: mongo-express
+service:
+  client:
+    nodePort: 30007
+  mongoExpress:
+    nodePort: 30008

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudl-client-deployment
+  labels:
+    app: cloudl-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudl-client
+  template:
+    metadata:
+      labels:
+        app: cloudl-client
+    spec:
+      containers:
+        - name: cloudl-client
+          image: "{{ .Values.image.repository }}:{{ .Values.image.clientTag }}"
+          ports:
+            - containerPort: 80
+              name: http-port
+          env:
+            - name: API_HOST
+              value: cloudl-server-service
+            - name: API_PORT
+              value: "5000"
+            - name: CLOUDL_SERVER
+              value: cloudl-server-service
+      imagePullSecrets:
+        - name: ecr-registry-secret

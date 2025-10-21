@@ -61,6 +61,20 @@ cloudl-k8s/
 cd k8s/
 ./deploy.sh
 ```
+
+### Kustomize overlays (alternative)
+
+There's a kustomize-friendly version of the manifests in `Kustomize-k8s/` with a `base/` and `overlays/` for `dev`, `staging`, and `prod`.
+
+Build or apply an overlay directly:
+
+```bash
+# build to stdout
+kubectl kustomize Kustomize-k8s/overlays/dev
+
+# apply to cluster
+kubectl apply -k Kustomize-k8s/overlays/prod
+```
 ### 2. Deploy EFK Stack
 ```bash
 cd ../efk/

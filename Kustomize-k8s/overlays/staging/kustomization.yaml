@@ -1,0 +1,8 @@
+resources:
+  - ../../base
+
+namespace: cloudl-staging
+
+patchesStrategicMerge:
+  - patch-server-image.yaml
+  - patch-client-image.yaml
